@@ -1,0 +1,17 @@
+{
+  "name": "lambda-in-fargate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "runner.js",
+  "dependencies": {
+    "aws-sdk": "^2.546.0",
+    "promisepipe": "^3.0.0",
+    "unzipper": "^0.10.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
