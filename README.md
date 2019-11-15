@@ -1,1 +1,1 @@
-# docker-lambda-container repo is use to create Docker image which will be used to execute arbitrary AWS Lambda on ECS (Fargate) but not in AWS original execution environment 
+# docker-lambda-container repo is used to create Docker image which will be used to execute arbitrary AWS Lambda on ECS (Fargate) but not in AWS original execution environment 
