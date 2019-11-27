@@ -8,7 +8,7 @@ const unzipper = require('unzipper');
 
 
 const runner = async () => {
-  const { AWS_LAMBDA_HANDLER_PATH, AWS_LAMBDA_FUNCTION_CONTEXT,  AWS_LAMBDA_FUNCTION_EVENT } = process.env;
+  const { AWS_LAMBDA_FUNCTION_CONTEXT } = process.env;
   const REGION = process.env.AWS_REGION || 'eu-west-1';
   // context & event both have same as originally invoked Lambda with data
   const context = JSON.parse(AWS_LAMBDA_FUNCTION_CONTEXT);
@@ -18,7 +18,6 @@ const runner = async () => {
   }
 
   const originalInvoking = context.functionName;
-  const LAMBDA_ROOT_PATH = '/var/task';
   try {
     const lambda = new AWS.Lambda({ region: REGION });
     // get URL to Lambda ZIP archive
@@ -26,16 +25,14 @@ const runner = async () => {
       .getFunction({ FunctionName: originalInvoking })
       .promise();
     const sourceCodeSignedUrl = lambdaInfo.Code.Location;
+    const LAMBDA_ROOT_PATH = '/var/task';
+    const pathToHandler = path.resolve(
+      `${LAMBDA_ROOT_PATH}/${lambdaInfo.Configuration.Handler.split('.')[0]}`
+    );
     
-    //TODO: get lambda env list and pass it in child process
     return https.get(sourceCodeSignedUrl, async res => {
       // Download source from cloud and extract it in the current directory at the same time.
       await promisePipe(res, unzipper.Extract({ path: __dirname }));
-
-      const pathToHandler = path.resolve(
-        `${LAMBDA_ROOT_PATH}/${AWS_LAMBDA_HANDLER_PATH}`
-      );
-
       // read index-template.js, substitute param and write to runner-child-process.js
       const  indexTemplateContent = fs.readFileSync('./index-template.js', {encoding: 'utf8'});
       const amendedContent = indexTemplateContent.replace('%%pathToHandler%%', pathToHandler);
@@ -47,9 +44,10 @@ const runner = async () => {
       const execOutput = child_process.execFileSync('node',
       [ path.resolve(__dirname, './runner-child-process.js') ], { 
         cwd: __dirname,
-        env: childProcessEnv
+        env: childProcessEnv,
+        stdio: 'inherit'
        });      
-      console.log('-- execFileSync returned:', execOutput.toString());
+      console.log('-- execFileSync returned:', execOutput);
 
     });
 

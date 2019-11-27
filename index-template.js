@@ -21,9 +21,9 @@ async function saveResponseInDB(err, data, functionName) {
   const thisTaskId = JSON.parse(meta).TaskARN.split('/')[1];
   console.log('- thisTaskId', thisTaskId);
 
-  const docClient = new AWS.DynamoDB.DocumentClient({region: process.env.REGION});
+  const docClient = new AWS.DynamoDB.DocumentClient({region: process.env.AWS_REGION});
   const params = {
-    TableName:'task-response',
+    TableName:'pdflib-task-response',
     Item:{
         "lambda": functionName,
         "task": thisTaskId,
@@ -32,7 +32,6 @@ async function saveResponseInDB(err, data, functionName) {
         ttl: Math.round(Date.now() / 1000) + 24 * 60 * 60
     }
   };
-
   await docClient.put(params).promise();
 }
 
@@ -50,6 +49,9 @@ async function toolboxCallback(err, data) {
 
 async function wrapper() {
   const context = JSON.parse(process.env.AWS_LAMBDA_FUNCTION_CONTEXT);
+  context.fail = async (err) => {
+    await toolboxCallback(err);
+  }
   const event = JSON.parse(process.env.AWS_LAMBDA_FUNCTION_EVENT);
   lambdaFunctionName = context.functionName;
   // same to original Lambda exported handler. Pass here orginal context & event
